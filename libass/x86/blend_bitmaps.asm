@@ -118,19 +118,19 @@ BLEND_BITMAPS add
 BLEND_BITMAPS sub
 
 ;------------------------------------------------------------------------------
-; MUL_BITMAPS
-; void mul_bitmaps(uint8_t *dst, intptr_t dst_stride,
-;                  uint8_t *src1, intptr_t src1_stride,
-;                  uint8_t *src2, intptr_t src2_stride,
-;                  intptr_t width, intptr_t height);
+; CLIP_BITMAPS
+; void clip_bitmaps(uint8_t *dst, intptr_t dst_stride,
+;                   uint8_t *src1, intptr_t src1_stride,
+;                   uint8_t *src2, intptr_t src2_stride,
+;                   intptr_t width, intptr_t height);
 ;------------------------------------------------------------------------------
 
-%macro MUL_BITMAPS 0
+%macro CLIP_BITMAPS 0
 %if ARCH_X86_64
-cglobal mul_bitmaps, 7,9,7
+cglobal clip_bitmaps, 7,9,4
     DECLARE_REG_TMP 8,7
 %else
-cglobal mul_bitmaps, 1,7,7
+cglobal clip_bitmaps, 1,7,4
     DECLARE_REG_TMP 1,3
     mov r2, r2m
     mov r4, r4m
@@ -143,14 +143,8 @@ cglobal mul_bitmaps, 1,7,7
     neg r6
     mov t0, r6
     and r6, mmsize - 1
-    LOAD_EDGE_MASK 4, r6, t1
-%if ARCH_X86_64 || !PIC
-    mova m5, [words_255]
-%else
-    mov t1d, 255 * 0x10001
-    BCASTD 5, t1d
-%endif
-    pxor m6, m6
+    LOAD_EDGE_MASK 2, r6, t1
+    pcmpeqb m3, m3
     mov t1, r7m
     imul t1, r5
     add t1, r4
@@ -162,20 +156,11 @@ cglobal mul_bitmaps, 1,7,7
 .loop_entry:
     movu m0, [r2 + r6]
     movu m1, [r4 + r6]
-    punpckhbw m2, m0, m6
-    punpckhbw m3, m1, m6
-    punpcklbw m0, m6
-    punpcklbw m1, m6
-    pmullw m2, m3
-    pmullw m0, m1
-    paddw m2, m5
-    paddw m0, m5
-    psrlw m2, 8
-    psrlw m0, 8
-    packuswb m0, m2
+    pxor m1, m3
+    psubusb m0, m1
     add r6, mmsize
     jnc .width_loop
-    pand m0, m4
+    pand m0, m2
     mova [r0 + r6 - mmsize], m0
 %if ARCH_X86_64
     add r0, r1
@@ -192,6 +177,6 @@ cglobal mul_bitmaps, 1,7,7
 %endmacro
 
 INIT_XMM sse2
-MUL_BITMAPS
+CLIP_BITMAPS
 INIT_YMM avx2
-MUL_BITMAPS
+CLIP_BITMAPS

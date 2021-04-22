@@ -749,10 +749,10 @@ static void blend_vector_clip(ASS_Renderer *render_priv, ASS_Image *head)
                 break;
 
             // Blend together
-            render_priv->engine->mul_bitmaps(nbuffer, ns,
-                                             abuffer + atop * as + aleft, as,
-                                             bbuffer + btop * bs + bleft, bs,
-                                             w, h);
+            render_priv->engine->clip_bitmaps(nbuffer, ns,
+                                              abuffer + atop * as + aleft, as,
+                                              bbuffer + btop * bs + bleft, bs,
+                                              w, h);
             cur->dst_x += aleft;
             cur->dst_y += atop;
             cur->w = w;

@@ -38,10 +38,10 @@ typedef void (*FillGenericTileFunc)(uint8_t *buf, ptrdiff_t stride,
 typedef void (*BitmapBlendFunc)(uint8_t *dst, intptr_t dst_stride,
                                 uint8_t *src, intptr_t src_stride,
                                 intptr_t width, intptr_t height);
-typedef void (*BitmapMulFunc)(uint8_t *dst, intptr_t dst_stride,
-                              uint8_t *src1, intptr_t src1_stride,
-                              uint8_t *src2, intptr_t src2_stride,
-                              intptr_t width, intptr_t height);
+typedef void (*BitmapClipFunc)(uint8_t *dst, intptr_t dst_stride,
+                               uint8_t *src1, intptr_t src1_stride,
+                               uint8_t *src2, intptr_t src2_stride,
+                               intptr_t width, intptr_t height);
 
 typedef void (*BeBlurFunc)(uint8_t *buf, intptr_t stride,
                            intptr_t width, intptr_t height, uint16_t *tmp);
@@ -70,7 +70,7 @@ typedef struct {
 
     // blend functions
     BitmapBlendFunc add_bitmaps, sub_bitmaps;
-    BitmapMulFunc mul_bitmaps;
+    BitmapClipFunc clip_bitmaps;
 
     // be blur function
     BeBlurFunc be_blur;

@@ -37,10 +37,10 @@ void DECORATE(add_bitmaps)(uint8_t *dst, intptr_t dst_stride,
 void DECORATE(sub_bitmaps)(uint8_t *dst, intptr_t dst_stride,
                            uint8_t *src, intptr_t src_stride,
                            intptr_t width, intptr_t height);
-void DECORATE(mul_bitmaps)(uint8_t *dst, intptr_t dst_stride,
-                           uint8_t *src1, intptr_t src1_stride,
-                           uint8_t *src2, intptr_t src2_stride,
-                           intptr_t width, intptr_t height);
+void DECORATE(clip_bitmaps)(uint8_t *dst, intptr_t dst_stride,
+                            uint8_t *src1, intptr_t src1_stride,
+                            uint8_t *src2, intptr_t src2_stride,
+                            intptr_t width, intptr_t height);
 
 void DECORATE(be_blur)(uint8_t *buf, intptr_t stride,
                        intptr_t width, intptr_t height, uint16_t *tmp);
@@ -106,7 +106,7 @@ const BitmapEngine DECORATE(bitmap_engine) = {
 
     .add_bitmaps = DECORATE(add_bitmaps),
     .sub_bitmaps = DECORATE(sub_bitmaps),
-    .mul_bitmaps = DECORATE(mul_bitmaps),
+    .clip_bitmaps = DECORATE(clip_bitmaps),
 
     .be_blur = DECORATE(be_blur),
 

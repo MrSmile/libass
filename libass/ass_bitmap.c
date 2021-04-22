@@ -411,15 +411,16 @@ void ass_sub_bitmaps_c(uint8_t *dst, intptr_t dst_stride,
     }
 }
 
-void ass_mul_bitmaps_c(uint8_t *dst, intptr_t dst_stride,
-                       uint8_t *src1, intptr_t src1_stride,
-                       uint8_t *src2, intptr_t src2_stride,
-                       intptr_t width, intptr_t height)
+void ass_clip_bitmaps_c(uint8_t *dst, intptr_t dst_stride,
+                        uint8_t *src1, intptr_t src1_stride,
+                        uint8_t *src2, intptr_t src2_stride,
+                        intptr_t width, intptr_t height)
 {
-    uint8_t* end = src1 + src1_stride * height;
+    uint8_t *end = src1 + src1_stride * height;
     while (src1 < end) {
-        for (unsigned x = 0; x < width; ++x) {
-            dst[x] = (src1[x] * src2[x] + 255) >> 8;
+        for (intptr_t x = 0; x < width; x++) {
+            short out = src1[x] + src2[x] - 255;
+            dst[x] = FFMAX(out, 0);
         }
         dst  += dst_stride;
         src1 += src1_stride;
