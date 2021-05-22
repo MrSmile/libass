@@ -166,10 +166,10 @@ void rskip_spaces(char **str, char *limit)
     *str = p;
 }
 
-static int read_digits(char **str, unsigned base, uint32_t *res)
+static int read_digits(const char **str, unsigned base, uint32_t *res)
 {
-    char *p = *str;
-    char *start = p;
+    const char *p = *str;
+    const char *start = p;
     uint32_t val = 0;
 
     while (1) {
@@ -196,7 +196,7 @@ static int read_digits(char **str, unsigned base, uint32_t *res)
  * Follows the rules for strtoul but reduces the number modulo 2**32
  * instead of saturating it to 2**32 - 1.
  */
-static int mystrtou32_modulo(char **p, unsigned base, uint32_t *res)
+static int mystrtou32_modulo(const char **p, unsigned base, uint32_t *res)
 {
     // This emulates scanf with %d or %x format as it works on
     // Windows, because that's what is used by VSFilter. In practice,
@@ -205,10 +205,10 @@ static int mystrtou32_modulo(char **p, unsigned base, uint32_t *res)
 
     // Unlike scanf and like strtoul, produce 0 for invalid inputs.
 
-    char *start = *p;
+    const char *start = *p;
     int sign = 1;
 
-    skip_spaces(p);
+    skip_spaces((char **) p);
 
     if (**p == '+')
         ++*p;
@@ -249,7 +249,7 @@ uint32_t parse_color_tag(char *str)
     return ass_bswap32((uint32_t) color);
 }
 
-uint32_t parse_color_header(char *str)
+uint32_t parse_color_header(const char *str)
 {
     uint32_t color = 0;
     unsigned base;
@@ -265,20 +265,20 @@ uint32_t parse_color_header(char *str)
 }
 
 // Return a boolean value for a string
-char parse_bool(char *str)
+char parse_bool(const char *str)
 {
-    skip_spaces(&str);
+    skip_spaces((char **) &str);
     return !ass_strncasecmp(str, "yes", 3) || strtol(str, NULL, 10) > 0;
 }
 
-int parse_ycbcr_matrix(char *str)
+int parse_ycbcr_matrix(const char *str)
 {
-    skip_spaces(&str);
+    skip_spaces((char **) &str);
     if (*str == '\0')
         return YCBCR_DEFAULT;
 
-    char *end = str + strlen(str);
-    rskip_spaces(&end, str);
+    const char *end = str + strlen(str);
+    rskip_spaces((char **) &end, (char *) str);
 
     // Trim a local copy of the input that we know is safe to
     // modify. The buffer is larger than any valid string + NUL,
@@ -467,7 +467,7 @@ void ass_utf16be_to_utf8(char *dst, size_t dst_size, uint8_t *src, size_t src_si
  * Returns 0 if no styles found => expects at least 1 style.
  * Parsing code always adds "Default" style in the beginning.
  */
-int lookup_style(ASS_Track *track, char *name)
+int lookup_style(ASS_Track *track, const char *name)
 {
     int i;
     // '*' seem to mean literally nothing;
