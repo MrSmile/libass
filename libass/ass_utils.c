@@ -150,22 +150,6 @@ void *ass_try_realloc_array(void *ptr, size_t nmemb, size_t size)
     }
 }
 
-void skip_spaces(char **str)
-{
-    char *p = *str;
-    while ((*p == ' ') || (*p == '\t'))
-        ++p;
-    *str = p;
-}
-
-void rskip_spaces(char **str, char *limit)
-{
-    char *p = *str;
-    while ((p > limit) && ((p[-1] == ' ') || (p[-1] == '\t')))
-        --p;
-    *str = p;
-}
-
 static int read_digits(const char **str, unsigned base, uint32_t *res)
 {
     const char *p = *str;
