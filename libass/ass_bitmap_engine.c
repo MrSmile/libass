@@ -21,7 +21,7 @@
 
 #include "ass_bitmap_engine.h"
 
-#define ALIGN           C_ALIGN_ORDER
+#define ALIGN           4
 #define DECORATE(func)  ass_##func##_c
 #include "ass_func_template.h"
 #undef ALIGN

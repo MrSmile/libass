@@ -1,6 +1,6 @@
 m4_define([LIBASS_VERSION], [0.15.1])
 AC_INIT(libass, LIBASS_VERSION)
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 # Disable Fortran checks
 define([AC_LIBTOOL_LANG_F77_CONFIG], [:])

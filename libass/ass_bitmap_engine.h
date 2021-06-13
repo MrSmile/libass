@@ -54,8 +54,6 @@ typedef void (*ParamFilterFunc)(int16_t *dst, const int16_t *src,
                                 uintptr_t src_width, uintptr_t src_height,
                                 const int16_t *param);
 
-#define C_ALIGN_ORDER 5
-
 typedef struct {
     int align_order;  // log2(alignment)
 

@@ -29,9 +29,10 @@ libass_la_SOURCES = ass.h ass.c ass_types.h ass_utils.h ass_utils.c \
                     ass_render.h ass_render.c ass_render_api.c \
                     ass_parse.h ass_parse.c ass_priv.h ass_shaper.h ass_shaper.c \
                     ass_outline.h ass_outline.c ass_drawing.h ass_drawing.c \
-                    ass_rasterizer.h ass_rasterizer.c ass_rasterizer_c.c \
-                    ass_bitmap.h ass_bitmap.c ass_blur.c ass_func_template.h \
-                    ass_cpu.h ass_cpu.c ass_bitmap_engine.h ass_bitmap_engine.c
+                    ass_rasterizer.h ass_rasterizer.c ass_bitmap.h ass_bitmap.c ass_blur.c \
+                    ass_cpu.h ass_cpu.c ass_bitmap_engine.h ass_bitmap_engine.c \
+                    C/rasterizer.h C/rasterizer.c C/blend_bitmaps.c C/be_blur.c \
+                    C/blur.h C/blur.c ass_func_template.h
 
 libass_la_LDFLAGS = -no-undefined -version-info $(LIBASS_LT_CURRENT):$(LIBASS_LT_REVISION):$(LIBASS_LT_AGE)
 libass_la_LDFLAGS += -export-symbols $(srcdir)/libass.sym
