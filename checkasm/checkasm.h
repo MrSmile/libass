@@ -55,6 +55,7 @@ int xor128_rand(void);
 
 void checkasm_check_blend_bitmaps(const BitmapEngine *engine);
 void checkasm_check_be_blur(const BitmapEngine *engine);
+void checkasm_check_blur(const BitmapEngine *engine);
 
 void *checkasm_check_func(void *func, const char *name, ...);
 int checkasm_bench_func(void);
