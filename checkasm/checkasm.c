@@ -463,6 +463,9 @@ static void signal_handler(const int s) {
 }
 #endif
 
+
+const BitmapEngine **bitmap_engine_init(ASS_CPUFlags mask);
+
 /* Perform tests and benchmarks for the specified
  * cpu flag if supported by the host */
 static void check_cpu_flag(const char *const name, unsigned flag) {
@@ -471,15 +474,18 @@ static void check_cpu_flag(const char *const name, unsigned flag) {
     flag |= old_cpu_flag;
     state.cpu_flag = ass_get_cpu_flags(flag);
 
-    if (!flag || state.cpu_flag != old_cpu_flag) {
-        state.cpu_flag_name = name;
-        const BitmapEngine *engine = ass_bitmap_engine_init(state.cpu_flag);
-        for (int i = 0; tests[i].func; i++) {
-            if (state.test_name && strcmp(tests[i].name, state.test_name))
-                continue;
+    if (flag && state.cpu_flag == old_cpu_flag)
+        return;
+
+    state.cpu_flag_name = name;
+    for (int i = 0; tests[i].func; i++) {
+        if (state.test_name && strcmp(tests[i].name, state.test_name))
+            continue;
+        state.current_test_name = tests[i].name;
+        const BitmapEngine **engine = bitmap_engine_init(state.cpu_flag);
+        for (; *engine; engine++) {
             xor128_srand(state.seed);
-            state.current_test_name = tests[i].name;
-            tests[i].func(engine);
+            tests[i].func(*engine);
         }
     }
 }

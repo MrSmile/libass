@@ -21,6 +21,12 @@
 
 #include "ass_bitmap_engine.h"
 
+#if CONFIG_LARGE_TILES
+#define LARGE_TILES 1
+#else
+#define LARGE_TILES 0
+#endif
+
 #define ALIGN           4
 #define DECORATE(func)  ass_##func##_c
 #include "ass_func_template.h"

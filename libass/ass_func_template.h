@@ -16,7 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef DECORATE_ALIGN
+#define DEC_A DECORATE_ALIGN
+#else
+#define DEC_A DECORATE
+#endif
 
+#ifdef DECORATE_NAME
+#define DEC_N DECORATE_NAME
+#else
+#define DEC_N DEC_A
+#endif
 
 void DECORATE(fill_solid_tile16)(uint8_t *buf, ptrdiff_t stride, int set);
 void DECORATE(fill_solid_tile32)(uint8_t *buf, ptrdiff_t stride, int set);
@@ -45,54 +55,53 @@ void DECORATE(mul_bitmaps)(uint8_t *dst, intptr_t dst_stride,
 void DECORATE(be_blur)(uint8_t *buf, intptr_t stride,
                        intptr_t width, intptr_t height, uint16_t *tmp);
 
-void DECORATE(stripe_unpack)(int16_t *dst, const uint8_t *src, ptrdiff_t src_stride,
-                             uintptr_t width, uintptr_t height);
-void DECORATE(stripe_pack)(uint8_t *dst, ptrdiff_t dst_stride, const int16_t *src,
-                           uintptr_t width, uintptr_t height);
-void DECORATE(shrink_horz)(int16_t *dst, const int16_t *src,
-                           uintptr_t src_width, uintptr_t src_height);
-void DECORATE(shrink_vert)(int16_t *dst, const int16_t *src,
-                           uintptr_t src_width, uintptr_t src_height);
-void DECORATE(expand_horz)(int16_t *dst, const int16_t *src,
-                           uintptr_t src_width, uintptr_t src_height);
-void DECORATE(expand_vert)(int16_t *dst, const int16_t *src,
-                           uintptr_t src_width, uintptr_t src_height);
-void DECORATE(blur4_horz)(int16_t *dst, const int16_t *src,
-                          uintptr_t src_width, uintptr_t src_height,
-                          const int16_t *param);
-void DECORATE(blur4_vert)(int16_t *dst, const int16_t *src,
-                          uintptr_t src_width, uintptr_t src_height,
-                          const int16_t *param);
-void DECORATE(blur5_horz)(int16_t *dst, const int16_t *src,
-                          uintptr_t src_width, uintptr_t src_height,
-                          const int16_t *param);
-void DECORATE(blur5_vert)(int16_t *dst, const int16_t *src,
-                          uintptr_t src_width, uintptr_t src_height,
-                          const int16_t *param);
-void DECORATE(blur6_horz)(int16_t *dst, const int16_t *src,
-                          uintptr_t src_width, uintptr_t src_height,
-                          const int16_t *param);
-void DECORATE(blur6_vert)(int16_t *dst, const int16_t *src,
-                          uintptr_t src_width, uintptr_t src_height,
-                          const int16_t *param);
-void DECORATE(blur7_horz)(int16_t *dst, const int16_t *src,
-                          uintptr_t src_width, uintptr_t src_height,
-                          const int16_t *param);
-void DECORATE(blur7_vert)(int16_t *dst, const int16_t *src,
-                          uintptr_t src_width, uintptr_t src_height,
-                          const int16_t *param);
-void DECORATE(blur8_horz)(int16_t *dst, const int16_t *src,
-                          uintptr_t src_width, uintptr_t src_height,
-                          const int16_t *param);
-void DECORATE(blur8_vert)(int16_t *dst, const int16_t *src,
-                          uintptr_t src_width, uintptr_t src_height,
-                          const int16_t *param);
+void DEC_A(stripe_unpack)(int16_t *dst, const uint8_t *src, ptrdiff_t src_stride,
+                          uintptr_t width, uintptr_t height);
+void DEC_A(stripe_pack)(uint8_t *dst, ptrdiff_t dst_stride, const int16_t *src,
+                        uintptr_t width, uintptr_t height);
+void DEC_A(shrink_horz)(int16_t *dst, const int16_t *src,
+                        uintptr_t src_width, uintptr_t src_height);
+void DEC_A(shrink_vert)(int16_t *dst, const int16_t *src,
+                        uintptr_t src_width, uintptr_t src_height);
+void DEC_A(expand_horz)(int16_t *dst, const int16_t *src,
+                        uintptr_t src_width, uintptr_t src_height);
+void DEC_A(expand_vert)(int16_t *dst, const int16_t *src,
+                        uintptr_t src_width, uintptr_t src_height);
+void DEC_A(blur4_horz)(int16_t *dst, const int16_t *src,
+                       uintptr_t src_width, uintptr_t src_height,
+                       const int16_t *param);
+void DEC_A(blur4_vert)(int16_t *dst, const int16_t *src,
+                       uintptr_t src_width, uintptr_t src_height,
+                       const int16_t *param);
+void DEC_A(blur5_horz)(int16_t *dst, const int16_t *src,
+                       uintptr_t src_width, uintptr_t src_height,
+                       const int16_t *param);
+void DEC_A(blur5_vert)(int16_t *dst, const int16_t *src,
+                       uintptr_t src_width, uintptr_t src_height,
+                       const int16_t *param);
+void DEC_A(blur6_horz)(int16_t *dst, const int16_t *src,
+                       uintptr_t src_width, uintptr_t src_height,
+                       const int16_t *param);
+void DEC_A(blur6_vert)(int16_t *dst, const int16_t *src,
+                       uintptr_t src_width, uintptr_t src_height,
+                       const int16_t *param);
+void DEC_A(blur7_horz)(int16_t *dst, const int16_t *src,
+                       uintptr_t src_width, uintptr_t src_height,
+                       const int16_t *param);
+void DEC_A(blur7_vert)(int16_t *dst, const int16_t *src,
+                       uintptr_t src_width, uintptr_t src_height,
+                       const int16_t *param);
+void DEC_A(blur8_horz)(int16_t *dst, const int16_t *src,
+                       uintptr_t src_width, uintptr_t src_height,
+                       const int16_t *param);
+void DEC_A(blur8_vert)(int16_t *dst, const int16_t *src,
+                       uintptr_t src_width, uintptr_t src_height,
+                       const int16_t *param);
 
-
-const BitmapEngine DECORATE(bitmap_engine) = {
+const BitmapEngine DEC_N(bitmap_engine) = {
     .align_order = ALIGN,
 
-#if CONFIG_LARGE_TILES
+#if LARGE_TILES
     .tile_order = 5,
     .fill_solid = DECORATE(fill_solid_tile32),
     .fill_halfplane = DECORATE(fill_halfplane_tile32),
@@ -110,12 +119,15 @@ const BitmapEngine DECORATE(bitmap_engine) = {
 
     .be_blur = DECORATE(be_blur),
 
-    .stripe_unpack = DECORATE(stripe_unpack),
-    .stripe_pack = DECORATE(stripe_pack),
-    .shrink_horz = DECORATE(shrink_horz),
-    .shrink_vert = DECORATE(shrink_vert),
-    .expand_horz = DECORATE(expand_horz),
-    .expand_vert = DECORATE(expand_vert),
-    .blur_horz = { DECORATE(blur4_horz), DECORATE(blur5_horz), DECORATE(blur6_horz), DECORATE(blur7_horz), DECORATE(blur8_horz) },
-    .blur_vert = { DECORATE(blur4_vert), DECORATE(blur5_vert), DECORATE(blur6_vert), DECORATE(blur7_vert), DECORATE(blur8_vert) },
+    .stripe_unpack = DEC_A(stripe_unpack),
+    .stripe_pack = DEC_A(stripe_pack),
+    .shrink_horz = DEC_A(shrink_horz),
+    .shrink_vert = DEC_A(shrink_vert),
+    .expand_horz = DEC_A(expand_horz),
+    .expand_vert = DEC_A(expand_vert),
+    .blur_horz = { DEC_A(blur4_horz), DEC_A(blur5_horz), DEC_A(blur6_horz), DEC_A(blur7_horz), DEC_A(blur8_horz) },
+    .blur_vert = { DEC_A(blur4_vert), DEC_A(blur5_vert), DEC_A(blur6_vert), DEC_A(blur7_vert), DEC_A(blur8_vert) },
 };
+
+#undef DEC_A
+#undef DEC_N

@@ -1,7 +1,7 @@
 AM_CFLAGS = -Wall
 
 check_PROGRAMS = checkasm
-checkasm_SOURCES = checkasm.h checkasm.c blend_bitmaps.c be_blur.c
+checkasm_SOURCES = checkasm.h checkasm.c bitmap_engine.c blend_bitmaps.c be_blur.c
 checkasm_CPPFLAGS = -I$(top_srcdir)/libass
 checkasm_LDADD = $(top_builddir)/libass/.libs/libass.a
 checkasm_LDFLAGS = $(AM_LDFLAGS) -static
