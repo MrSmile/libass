@@ -68,6 +68,7 @@ static const struct {
     const char *name;
     void (*func)(const BitmapEngine *);
 } tests[] = {
+    { "rasterizer", checkasm_check_rasterizer },
     { "blend_bitmaps", checkasm_check_blend_bitmaps },
     { "be_blur", checkasm_check_be_blur },
     { "blur", checkasm_check_blur },

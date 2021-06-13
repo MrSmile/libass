@@ -53,6 +53,7 @@
 int xor128_rand(void);
 #define rnd xor128_rand
 
+void checkasm_check_rasterizer(const BitmapEngine *engine);
 void checkasm_check_blend_bitmaps(const BitmapEngine *engine);
 void checkasm_check_be_blur(const BitmapEngine *engine);
 void checkasm_check_blur(const BitmapEngine *engine);
