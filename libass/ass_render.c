@@ -90,16 +90,16 @@ ASS_Renderer *ass_renderer_init(ASS_Library *library)
     if (!rasterizer_init(priv->engine, &priv->rasterizer, RASTERIZER_PRECISION))
         goto fail;
 
+    priv->cache.cache_list = ass_cache_list_create();
     priv->cache.font_cache = ass_font_cache_create();
-    priv->cache.bitmap_cache = ass_bitmap_cache_create();
-    priv->cache.composite_cache = ass_composite_cache_create();
-    priv->cache.outline_cache = ass_outline_cache_create();
-    if (!priv->cache.font_cache || !priv->cache.bitmap_cache || !priv->cache.composite_cache || !priv->cache.outline_cache)
+    priv->cache.bitmap_cache = ass_bitmap_cache_create(priv->cache.cache_list);
+    priv->cache.composite_cache = ass_composite_cache_create(priv->cache.cache_list);
+    priv->cache.outline_cache = ass_outline_cache_create(priv->cache.cache_list);
+    if (!priv->cache.cache_list || !priv->cache.font_cache || !priv->cache.bitmap_cache ||
+            !priv->cache.composite_cache || !priv->cache.outline_cache)
         goto fail;
 
-    priv->cache.glyph_max = GLYPH_CACHE_MAX;
-    priv->cache.bitmap_max_size = BITMAP_CACHE_MAX_SIZE;
-    priv->cache.composite_max_size = COMPOSITE_CACHE_MAX_SIZE;
+    priv->cache.max_size = TOTAL_CACHE_MAX_SIZE;
 
     priv->text_info.max_bitmaps = MAX_BITMAPS_INITIAL;
     priv->text_info.max_glyphs = MAX_GLYPHS_INITIAL;
@@ -142,6 +142,8 @@ void ass_renderer_done(ASS_Renderer *render_priv)
     ass_cache_done(render_priv->cache.composite_cache);
     ass_cache_done(render_priv->cache.bitmap_cache);
     ass_cache_done(render_priv->cache.outline_cache);
+    ass_cache_list_done(render_priv->cache.cache_list);
+
     ass_shaper_free(render_priv->shaper);
     ass_cache_done(render_priv->cache.font_cache);
 
@@ -1161,6 +1163,7 @@ size_t ass_outline_construct(void *key, void *value, void *priv)
     OutlineHashValue *v = value;
     memset(v, 0, sizeof(*v));
 
+    size_t size = sizeof(OutlineHashKey) + sizeof(OutlineHashValue);
     switch (outline_key->type) {
     case OUTLINE_GLYPH:
         {
@@ -1168,11 +1171,11 @@ size_t ass_outline_construct(void *key, void *value, void *priv)
             ass_face_set_size(k->font->faces[k->face_index], k->size);
             if (!ass_font_get_glyph(k->font, k->face_index, k->glyph_index,
                                     render_priv->settings.hinting))
-                return 1;
+                return size;
             if (!ass_get_glyph_outline(&v->outline[0], &v->advance,
                                        k->font->faces[k->face_index],
                                        k->flags))
-                return 1;
+                return size;
             ass_font_get_asc_desc(k->font, k->face_index,
                                   &v->asc, &v->desc);
             break;
@@ -1182,7 +1185,7 @@ size_t ass_outline_construct(void *key, void *value, void *priv)
             ASS_Rect bbox;
             const char *text = outline_key->u.drawing.text.str;  // always zero-terminated
             if (!ass_drawing_parse(&v->outline[0], &bbox, text, render_priv->library))
-                return 1;
+                return size;
 
             v->advance = bbox.x_max - bbox.x_min;
             v->asc = bbox.y_max - bbox.y_min;
@@ -1200,7 +1203,7 @@ size_t ass_outline_construct(void *key, void *value, void *priv)
             ASS_Outline src;
             if (!outline_scale_pow2(&src, &k->outline->outline[0],
                                     k->scale_ord_x, k->scale_ord_y))
-                return 1;
+                return size;
             if (!outline_stroke(&v->outline[0], &v->outline[1], &src,
                                 k->border.x * STROKER_PRECISION,
                                 k->border.y * STROKER_PRECISION,
@@ -1209,7 +1212,7 @@ size_t ass_outline_construct(void *key, void *value, void *priv)
                 outline_free(&v->outline[0]);
                 outline_free(&v->outline[1]);
                 outline_free(&src);
-                return 1;
+                return size;
             }
             outline_free(&src);
             break;
@@ -1218,7 +1221,7 @@ size_t ass_outline_construct(void *key, void *value, void *priv)
         {
             ASS_Outline *ol = &v->outline[0];
             if (!outline_alloc(ol, 4, 4))
-                return 1;
+                return size;
             ol->points[0].x = ol->points[3].x = 0;
             ol->points[1].x = ol->points[2].x = 64;
             ol->points[0].y = ol->points[1].y = 0;
@@ -1231,7 +1234,7 @@ size_t ass_outline_construct(void *key, void *value, void *priv)
             break;
         }
     default:
-        return 1;
+        return size;
     }
 
     rectangle_reset(&v->cbox);
@@ -1240,7 +1243,10 @@ size_t ass_outline_construct(void *key, void *value, void *priv)
     if (v->cbox.x_min > v->cbox.x_max || v->cbox.y_min > v->cbox.y_max)
         v->cbox.x_min = v->cbox.y_min = v->cbox.x_max = v->cbox.y_max = 0;
     v->valid = true;
-    return 1;
+
+    size += (v->outline[0].max_points + v->outline[1].max_points) * sizeof(ASS_Vector);
+    size += v->outline[0].max_segments + v->outline[1].max_segments;
+    return size;
 }
 
 /**
@@ -2844,9 +2850,7 @@ ass_render_event(ASS_Renderer *render_priv, ASS_Event *event,
  */
 static void check_cache_limits(ASS_Renderer *priv, CacheStore *cache)
 {
-    ass_cache_cut(cache->composite_cache, cache->composite_max_size);
-    ass_cache_cut(cache->bitmap_cache, cache->bitmap_max_size);
-    ass_cache_cut(cache->outline_cache, cache->glyph_max);
+    ass_cache_cut(cache->cache_list, cache->max_size);
 }
 
 /**

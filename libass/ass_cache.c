@@ -305,14 +305,18 @@ typedef struct cache_item {
     size_t size, ref_count;
 } CacheItem;
 
+struct cache_list {
+    CacheItem *queue_first, **queue_last;
+    size_t total_size;
+};
+
 struct cache {
     unsigned buckets;
     CacheItem **map;
-    CacheItem *queue_first, **queue_last;
 
     const CacheDesc *desc;
+    CacheList *list;
 
-    size_t cache_size;
     unsigned hits;
     unsigned misses;
     unsigned items;
@@ -332,14 +336,25 @@ static inline CacheItem *value_to_item(void *value)
 }
 
 
+CacheList *ass_cache_list_create(void)
+{
+    CacheList *list = malloc(sizeof(CacheList));
+    if (!list)
+        return NULL;
+    list->queue_first = NULL;
+    list->queue_last = &list->queue_first;
+    list->total_size = 0;
+    return list;
+}
+
 // Create a cache with type-specific hash/compare/destruct/size functions
-Cache *ass_cache_create(const CacheDesc *desc)
+Cache *ass_cache_create(const CacheDesc *desc, CacheList *list)
 {
     Cache *cache = calloc(1, sizeof(*cache));
     if (!cache)
         return NULL;
     cache->buckets = 0xFFFF;
-    cache->queue_last = &cache->queue_first;
+    cache->list = list;
     cache->desc = desc;
     cache->map = calloc(cache->buckets, sizeof(CacheItem *));
     if (!cache->map) {
@@ -359,15 +374,15 @@ void *ass_cache_get(Cache *cache, void *key, void *priv)
     while (item) {
         if (desc->compare_func(key, (char *) item + key_offs)) {
             assert(item->size);
-            if (!item->queue_prev || item->queue_next) {
+            if (cache->list && (!item->queue_prev || item->queue_next)) {
                 if (item->queue_prev) {
                     item->queue_next->queue_prev = item->queue_prev;
                     *item->queue_prev = item->queue_next;
                 } else
                     item->ref_count++;
-                *cache->queue_last = item;
-                item->queue_prev = cache->queue_last;
-                cache->queue_last = &item->queue_next;
+                *cache->list->queue_last = item;
+                item->queue_prev = cache->list->queue_last;
+                cache->list->queue_last = &item->queue_next;
                 item->queue_next = NULL;
             }
             cache->hits++;
@@ -402,13 +417,15 @@ void *ass_cache_get(Cache *cache, void *key, void *priv)
     item->next = *bucketptr;
     *bucketptr = item;
 
-    *cache->queue_last = item;
-    item->queue_prev = cache->queue_last;
-    cache->queue_last = &item->queue_next;
-    item->queue_next = NULL;
+    if (cache->list) {
+        *cache->list->queue_last = item;
+        item->queue_prev = cache->list->queue_last;
+        cache->list->queue_last = &item->queue_next;
+        cache->list->total_size += item->size + CACHE_ITEM_SIZE;
+        item->queue_next = NULL;
+    }
     item->ref_count = 2;
 
-    cache->cache_size += item->size;
     cache->items++;
     return value;
 }
@@ -452,47 +469,36 @@ void ass_cache_dec_ref(void *value)
         *item->prev = item->next;
 
         cache->items--;
-        cache->cache_size -= item->size;
+        if (cache->list)
+            cache->list->total_size -= item->size + CACHE_ITEM_SIZE;
     }
     destroy_item(item->desc, item);
 }
 
-void ass_cache_cut(Cache *cache, size_t max_size)
+void ass_cache_cut(CacheList *list, size_t max_size)
 {
-    if (cache->cache_size <= max_size)
+    if (list->total_size <= max_size)
         return;
 
     do {
-        CacheItem *item = cache->queue_first;
+        CacheItem *item = list->queue_first;
         if (!item)
             break;
-        assert(item->size);
 
-        cache->queue_first = item->queue_next;
-        if (--item->ref_count) {
-            item->queue_prev = NULL;
-            continue;
-        }
+        item->queue_prev = NULL;
+        list->queue_first = item->queue_next;
+        ass_cache_dec_ref((char *) item + CACHE_ITEM_SIZE);
+    } while (list->total_size > max_size);
 
-        if (item->next)
-            item->next->prev = item->prev;
-        *item->prev = item->next;
-
-        cache->items--;
-        cache->cache_size -= item->size;
-        destroy_item(cache->desc, item);
-    } while (cache->cache_size > max_size);
-    if (cache->queue_first)
-        cache->queue_first->queue_prev = &cache->queue_first;
+    if (list->queue_first)
+        list->queue_first->queue_prev = &list->queue_first;
     else
-        cache->queue_last = &cache->queue_first;
+        list->queue_last = &list->queue_first;
 }
 
-void ass_cache_stats(Cache *cache, size_t *size, unsigned *hits,
+void ass_cache_stats(Cache *cache, unsigned *hits,
                      unsigned *misses, unsigned *count)
 {
-    if (size)
-        *size = cache->cache_size;
     if (hits)
         *hits = cache->hits;
     if (misses)
@@ -508,7 +514,9 @@ void ass_cache_empty(Cache *cache)
         while (item) {
             assert(item->size);
             CacheItem *next = item->next;
-            if (item->queue_prev)
+            if (cache->list)
+                cache->list->total_size -= item->size + CACHE_ITEM_SIZE;
+            else
                 item->ref_count--;
             if (item->ref_count)
                 item->cache = NULL;
@@ -519,9 +527,21 @@ void ass_cache_empty(Cache *cache)
         cache->map[i] = NULL;
     }
 
-    cache->queue_first = NULL;
-    cache->queue_last = &cache->queue_first;
-    cache->items = cache->hits = cache->misses = cache->cache_size = 0;
+    cache->items = cache->hits = cache->misses = 0;
+}
+
+void ass_cache_list_empty(CacheList *list)
+{
+    CacheItem *item = list->queue_first;
+    while (item) {
+        CacheItem *del = item;
+        item = item->queue_next;
+
+        del->queue_prev = NULL;
+        ass_cache_dec_ref((char *) del + CACHE_ITEM_SIZE);
+    }
+    list->queue_first = NULL;
+    list->queue_last = &list->queue_first;
 }
 
 void ass_cache_done(Cache *cache)
@@ -531,28 +551,35 @@ void ass_cache_done(Cache *cache)
     free(cache);
 }
 
+void ass_cache_list_done(CacheList *list)
+{
+    ass_cache_list_empty(list);
+    free(list);
+}
+
+
 // Type-specific creation function
 Cache *ass_font_cache_create(void)
 {
-    return ass_cache_create(&font_cache_desc);
+    return ass_cache_create(&font_cache_desc, NULL);
 }
 
-Cache *ass_outline_cache_create(void)
+Cache *ass_outline_cache_create(CacheList *list)
 {
-    return ass_cache_create(&outline_cache_desc);
+    return ass_cache_create(&outline_cache_desc, list);
 }
 
 Cache *ass_glyph_metrics_cache_create(void)
 {
-    return ass_cache_create(&glyph_metrics_cache_desc);
+    return ass_cache_create(&glyph_metrics_cache_desc, NULL);
 }
 
-Cache *ass_bitmap_cache_create(void)
+Cache *ass_bitmap_cache_create(CacheList *list)
 {
-    return ass_cache_create(&bitmap_cache_desc);
+    return ass_cache_create(&bitmap_cache_desc, list);
 }
 
-Cache *ass_composite_cache_create(void)
+Cache *ass_composite_cache_create(CacheList *list)
 {
-    return ass_cache_create(&composite_cache_desc);
+    return ass_cache_create(&composite_cache_desc, list);
 }

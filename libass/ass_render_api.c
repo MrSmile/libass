@@ -30,6 +30,7 @@ static void ass_reconfigure(ASS_Renderer *priv)
     ass_cache_empty(priv->cache.composite_cache);
     ass_cache_empty(priv->cache.bitmap_cache);
     ass_cache_empty(priv->cache.outline_cache);
+    ass_cache_list_empty(priv->cache.cache_list);
 
     priv->width = settings->frame_width;
     priv->height = settings->frame_height;
@@ -183,19 +184,8 @@ int ass_fonts_update(ASS_Renderer *render_priv)
 void ass_set_cache_limits(ASS_Renderer *render_priv, int glyph_max,
                           int bitmap_max)
 {
-    render_priv->cache.glyph_max = glyph_max ? glyph_max : GLYPH_CACHE_MAX;
-
-    size_t bitmap_cache, composite_cache;
-    if (bitmap_max) {
-        bitmap_cache = MEGABYTE * (size_t) bitmap_max;
-        composite_cache = bitmap_cache / (COMPOSITE_CACHE_RATIO + 1);
-        bitmap_cache -= composite_cache;
-    } else {
-        bitmap_cache = BITMAP_CACHE_MAX_SIZE;
-        composite_cache = COMPOSITE_CACHE_MAX_SIZE;
-    }
-    render_priv->cache.bitmap_max_size = bitmap_cache;
-    render_priv->cache.composite_max_size = composite_cache;
+    (void) glyph_max;  // ignore glyph_max, treat bitmap_max as combined cache size
+    render_priv->cache.max_size = bitmap_max ? bitmap_max : TOTAL_CACHE_MAX_SIZE;
 }
 
 ASS_FontProvider *

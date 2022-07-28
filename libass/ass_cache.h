@@ -26,6 +26,7 @@
 #include "ass_bitmap.h"
 
 typedef struct cache Cache;
+typedef struct cache_list CacheList;
 typedef uint64_t ass_hashcode;
 
 // cache values
@@ -94,20 +95,24 @@ typedef struct
     size_t value_size;
 } CacheDesc;
 
-Cache *ass_cache_create(const CacheDesc *desc);
+CacheList *ass_cache_list_create(void);
+Cache *ass_cache_create(const CacheDesc *desc, CacheList *list);
 void *ass_cache_get(Cache *cache, void *key, void *priv);
 void *ass_cache_key(void *value);
 void ass_cache_inc_ref(void *value);
 void ass_cache_dec_ref(void *value);
-void ass_cache_cut(Cache *cache, size_t max_size);
-void ass_cache_stats(Cache *cache, size_t *size, unsigned *hits,
+void ass_cache_cut(CacheList *list, size_t max_size);
+void ass_cache_stats(Cache *cache, unsigned *hits,
                      unsigned *misses, unsigned *count);
 void ass_cache_empty(Cache *cache);
+void ass_cache_list_empty(CacheList *list);
 void ass_cache_done(Cache *cache);
+void ass_cache_list_done(CacheList *list);
+
 Cache *ass_font_cache_create(void);
-Cache *ass_outline_cache_create(void);
+Cache *ass_outline_cache_create(CacheList *list);
 Cache *ass_glyph_metrics_cache_create(void);
-Cache *ass_bitmap_cache_create(void);
-Cache *ass_composite_cache_create(void);
+Cache *ass_bitmap_cache_create(CacheList *list);
+Cache *ass_composite_cache_create(CacheList *list);
 
 #endif                          /* LIBASS_CACHE_H */

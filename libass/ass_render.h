@@ -39,11 +39,8 @@
 #include "ass_bitmap.h"
 #include "ass_rasterizer.h"
 
-#define GLYPH_CACHE_MAX 10000
 #define MEGABYTE (1024 * 1024)
-#define BITMAP_CACHE_MAX_SIZE (128 * MEGABYTE)
-#define COMPOSITE_CACHE_RATIO 2
-#define COMPOSITE_CACHE_MAX_SIZE (BITMAP_CACHE_MAX_SIZE / COMPOSITE_CACHE_RATIO)
+#define TOTAL_CACHE_MAX_SIZE (192 * MEGABYTE)
 
 #define PARSED_FADE (1<<0)
 #define PARSED_A    (1<<1)
@@ -278,13 +275,12 @@ typedef struct {
 } RenderContext;
 
 typedef struct {
+    CacheList *cache_list;
     Cache *font_cache;
     Cache *outline_cache;
     Cache *bitmap_cache;
     Cache *composite_cache;
-    size_t glyph_max;
-    size_t bitmap_max_size;
-    size_t composite_max_size;
+    size_t max_size;
 } CacheStore;
 
 #include "ass_shaper.h"
