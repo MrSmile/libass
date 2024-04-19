@@ -163,10 +163,10 @@ bool ass_outline_to_bitmap(RenderContext *state, Bitmap *bm,
         return false;
 
     // enlarge by 1/64th of pixel to bypass slow rasterizer path, add 1 pixel for shift_bitmap
-    int32_t x_min = (rst->bbox.x_min -   1) >> 6;
-    int32_t y_min = (rst->bbox.y_min -   1) >> 6;
-    int32_t x_max = (rst->bbox.x_max + 127) >> 6;
-    int32_t y_max = (rst->bbox.y_max + 127) >> 6;
+    int32_t x_min = (rst->bbox.x_min - 64) >> 6;
+    int32_t y_min = (rst->bbox.y_min - 64) >> 6;
+    int32_t x_max = (rst->bbox.x_max + 63) >> 6;
+    int32_t y_max = (rst->bbox.y_max + 63) >> 6;
     int32_t w = x_max - x_min;
     int32_t h = y_max - y_min;
 
@@ -236,25 +236,27 @@ void ass_shift_bitmap(Bitmap *bm, int shift_x, int shift_y)
 
     int32_t w = bm->w, h = bm->h;
     ptrdiff_t s = bm->stride;
-    uint8_t *buf = bm->buffer;
 
     // Shift in x direction
-    if (shift_x)
+    if (shift_x) {
+        uint8_t *buf = bm->buffer;
         for (int32_t y = 0; y < h; y++) {
-            for (int32_t x = w - 1; x > 0; x--) {
-                uint8_t b = buf[x + y * s - 1] * shift_x >> 6;
-                buf[x + y * s - 1] -= b;
-                buf[x + y * s] += b;
-            }
+            for (int32_t x = 1; x < w; x++)
+                buf[x - 1] -= (buf[x - 1] - buf[x]) * shift_x >> 6;
+            buf[w - 1] -= buf[w - 1] * shift_x >> 6;
+            buf += s;
         }
+    }
 
     // Shift in y direction
-    if (shift_y)
-        for (int32_t x = 0; x < w; x++) {
-            for (int32_t y = h - 1; y > 0; y--) {
-                uint8_t b = buf[x + y * s - s] * shift_y >> 6;
-                buf[x + y * s - s] -= b;
-                buf[x + y * s] += b;
-            }
+    if (shift_y) {
+        uint8_t *buf = bm->buffer;
+        for (int32_t y = 1; y < h; y++) {
+            for (int32_t x = 0; x < w; x++)
+                buf[x] -= (buf[x] - buf[x + s]) * shift_y >> 6;
+            buf += s;
         }
+        for (int32_t x = 0; x < w; x++)
+            buf[x] -= buf[x] * shift_y >> 6;
+    }
 }
