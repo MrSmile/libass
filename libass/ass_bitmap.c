@@ -231,32 +231,29 @@ void ass_shift_bitmap(Bitmap *bm, int shift_x, int shift_y)
 {
     assert((shift_x & ~63) == 0 && (shift_y & ~63) == 0);
 
-    if (!bm->buffer)
+    if (!bm->buffer || !(shift_x | shift_y))
         return;
 
     int32_t w = bm->w, h = bm->h;
     ptrdiff_t s = bm->stride;
+    uint8_t *buf = bm->buffer;
 
-    // Shift in x direction
-    if (shift_x) {
-        uint8_t *buf = bm->buffer;
-        for (int32_t y = 0; y < h; y++) {
-            for (int32_t x = 1; x < w; x++)
-                buf[x - 1] -= (buf[x - 1] - buf[x]) * shift_x >> 6;
-            buf[w - 1] -= buf[w - 1] * shift_x >> 6;
-            buf += s;
+    int16_t sy = shift_y << 9;
+    for (int32_t y = 1; y < h; y++) {
+        for (int32_t x = 1; x < w; x++) {
+            int16_t tmp1 = 64 * buf[x - 1] - (buf[x - 1] - buf[x]) * (int16_t) shift_x;
+            int16_t tmp2 = 64 * buf[x + s - 1] - (buf[x + s - 1] - buf[x + s]) * (int16_t) shift_x;
+            buf[x - 1] = (int16_t) (tmp1 - (int16_t) ((int16_t) (2 * (tmp1 - tmp2)) * (int32_t) sy >> 16) + 32) >> 6;
         }
+        int16_t tmp1 = 64 * buf[w - 1] - buf[w - 1] * (int16_t) shift_x;
+        int16_t tmp2 = 64 * buf[w + s - 1] - buf[w + s - 1] * (int16_t) shift_x;
+        buf[w - 1] = (int16_t) (tmp1 - (int16_t) ((int16_t) (2 * (tmp1 - tmp2)) * (int32_t) sy >> 16) + 32) >> 6;
+        buf += s;
     }
-
-    // Shift in y direction
-    if (shift_y) {
-        uint8_t *buf = bm->buffer;
-        for (int32_t y = 1; y < h; y++) {
-            for (int32_t x = 0; x < w; x++)
-                buf[x] -= (buf[x] - buf[x + s]) * shift_y >> 6;
-            buf += s;
-        }
-        for (int32_t x = 0; x < w; x++)
-            buf[x] -= buf[x] * shift_y >> 6;
+    for (int32_t x = 0; x < w; x++) {
+        int16_t tmp1 = 64 * buf[x - 1] - (buf[x - 1] - buf[x]) * (int16_t) shift_x;
+        buf[x - 1] = (int16_t) (tmp1 - (int16_t) (2 * tmp1 * (int32_t) sy >> 16) + 32) >> 6;
     }
+    int16_t tmp1 = 64 * buf[w - 1] - buf[w - 1] * (int16_t) shift_x;
+    buf[w - 1] = (int16_t) (tmp1 - (int16_t) (2 * tmp1 * (int32_t) sy >> 16) + 32) >> 6;
 }
