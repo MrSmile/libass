@@ -29,6 +29,7 @@ src_x86 = files(
     'x86/blur.asm',
     'x86/cpuid.asm',
     'x86/rasterizer.asm',
+    'x86/shift.asm',
 )
 src_aarch64 = files(
     'aarch64/asm.S',

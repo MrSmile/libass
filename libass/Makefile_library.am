@@ -37,6 +37,7 @@ if X86
 libass_libass_internal_la_SOURCES += \
     libass/x86/rasterizer.asm \
     libass/x86/blend_bitmaps.asm \
+    libass/x86/shift.asm \
     libass/x86/be_blur.asm \
     libass/x86/blur.asm \
     libass/x86/cpuid.h libass/x86/cpuid.asm
