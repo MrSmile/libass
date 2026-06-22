@@ -57,6 +57,7 @@
     GENERIC_FUNCTION(add_bitmaps,  suffix) \
     GENERIC_FUNCTION(imul_bitmaps, suffix) \
     GENERIC_FUNCTION(mul_bitmaps,  suffix) \
+    GENERIC_FUNCTION(shift,        suffix) \
     GENERIC_FUNCTION(be_blur,      suffix)
 
 
@@ -168,20 +169,16 @@ BitmapEngine ass_bitmap_engine_init(unsigned mask)
     BitmapEngine engine = {0};
     engine.tile_order = mask & ASS_FLAG_LARGE_TILES ? 5 : 4;
 
-    GENERIC_FUNCTION(shift, c)
-
 #if CONFIG_ASM
     unsigned flags = ass_get_cpu_flags(mask);
 #if ARCH_X86
     if (flags & ASS_CPU_FLAG_X86_AVX2) {
         ALL_PROTOTYPES(32, avx2)
         ALL_FUNCTIONS(5, 32, avx2)
-        GENERIC_FUNCTION(shift, avx2)
         return engine;
     } else if (flags & ASS_CPU_FLAG_X86_SSE2) {
         ALL_PROTOTYPES(16, sse2)
         ALL_FUNCTIONS(4, 16, sse2)
-        GENERIC_FUNCTION(shift, sse2)
         if (flags & ASS_CPU_FLAG_X86_SSSE3) {
             ALL_PROTOTYPES(16, ssse3)
             RASTERIZER_FUNCTION(fill_generic, ssse3)
