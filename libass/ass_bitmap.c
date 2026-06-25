@@ -224,36 +224,20 @@ void ass_fix_outline(Bitmap *bm_g, Bitmap *bm_o)
 }
 
 /**
- * \brief Shift a bitmap by the fraction of a pixel in negative x and y direction
+ * \brief Shift a bitmap in x and y direction by amount
  * expressed in 26.6 fixed point
  */
-void ass_shift_bitmap(Bitmap *bm, int shift_x, int shift_y)
+void ass_shift_bitmap(const BitmapEngine *engine, Bitmap *bm,
+                      int32_t shift_x, int32_t shift_y)
 {
-    assert((shift_x & ~63) == 0 && (shift_y & ~63) == 0);
-
-    if (!bm->buffer || !(shift_x | shift_y))
+    // Works right even for negative offsets
+    // '>>' rounds toward negative infinity, '&' returns correct remainder
+    bm->left -= -shift_x >> 6;
+    bm->top  -= -shift_y >> 6;
+    int x = -shift_x & 63;
+    int y = -shift_y & 63;
+    if (!bm->buffer || !(x | y))
         return;
 
-    int32_t w = bm->w, h = bm->h;
-    ptrdiff_t s = bm->stride;
-    uint8_t *buf = bm->buffer;
-
-    int16_t sy = shift_y << 9;
-    for (int32_t y = 1; y < h; y++) {
-        for (int32_t x = 1; x < w; x++) {
-            int16_t tmp1 = 64 * buf[x - 1] - (buf[x - 1] - buf[x]) * (int16_t) shift_x;
-            int16_t tmp2 = 64 * buf[x + s - 1] - (buf[x + s - 1] - buf[x + s]) * (int16_t) shift_x;
-            buf[x - 1] = (int16_t) (tmp1 - (int16_t) ((int16_t) (2 * (tmp1 - tmp2)) * (int32_t) sy >> 16) + 32) >> 6;
-        }
-        int16_t tmp1 = 64 * buf[w - 1] - buf[w - 1] * (int16_t) shift_x;
-        int16_t tmp2 = 64 * buf[w + s - 1] - buf[w + s - 1] * (int16_t) shift_x;
-        buf[w - 1] = (int16_t) (tmp1 - (int16_t) ((int16_t) (2 * (tmp1 - tmp2)) * (int32_t) sy >> 16) + 32) >> 6;
-        buf += s;
-    }
-    for (int32_t x = 1; x < w; x++) {
-        int16_t tmp1 = 64 * buf[x - 1] - (buf[x - 1] - buf[x]) * (int16_t) shift_x;
-        buf[x - 1] = (int16_t) (tmp1 - (int16_t) ((int16_t) (2 * tmp1) * (int32_t) sy >> 16) + 32) >> 6;
-    }
-    int16_t tmp1 = 64 * buf[w - 1] - buf[w - 1] * (int16_t) shift_x;
-    buf[w - 1] = (int16_t) (tmp1 - (int16_t) ((int16_t) (2 * tmp1) * (int32_t) sy >> 16) + 32) >> 6;
+    engine->shift(bm->buffer, bm->stride, bm->w, bm->h, x, y);
 }

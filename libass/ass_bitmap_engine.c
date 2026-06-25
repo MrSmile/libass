@@ -47,6 +47,7 @@
     BitmapBlendFunc ass_add_bitmaps_  ## suffix; \
     BitmapBlendFunc ass_imul_bitmaps_ ## suffix; \
     BitmapMulFunc   ass_mul_bitmaps_  ## suffix; \
+    ShiftFunc       ass_shift_        ## suffix; \
     BeBlurFunc      ass_be_blur_      ## suffix;
 
 #define GENERIC_FUNCTION(name, suffix) \
@@ -166,6 +167,8 @@ BitmapEngine ass_bitmap_engine_init(unsigned mask)
     BLUR_PROTOTYPES(32, c)
     BitmapEngine engine = {0};
     engine.tile_order = mask & ASS_FLAG_LARGE_TILES ? 5 : 4;
+
+    GENERIC_FUNCTION(shift, c)
 
 #if CONFIG_ASM
     unsigned flags = ass_get_cpu_flags(mask);
